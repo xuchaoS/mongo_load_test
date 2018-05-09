@@ -12,7 +12,9 @@ table_name = 'table_name'
 source_dir = 'dir'
 
 concurrent_num = 10
+exec_times = 10
 delay = 1
+style = 'sequence'  # sequence concurrent scheduler
 
 if __name__ == '__main__':
     pass
