@@ -58,13 +58,14 @@ class LoadTest(object):
         for j in th:
             j.start()
         if style == 'concurrent':
-            for _ in range(exec_times):
+            for i in range(exec_times):
                 self.event.acquire()
                 self.event.notify_all()
                 self.event.release()
-                while len(self.event._waiters) != current_num:
-                    time.sleep(0.1)
-                time.sleep(delay)
+                if i + 1 != exec_times:
+                    while len(self.event._waiters) != current_num:
+                        time.sleep(0.1)
+                    time.sleep(delay)
 
     def _run(self, exec_times, style):
         if style == 'sequence':
@@ -85,7 +86,14 @@ class LoadTest(object):
         else:
             raise Exception('style not support: ' + style)
 
+class Handle(LoadTest):
+    def __init__(self):
+        super().__init__()
+        self.mongo = Mongo()
+
+    def run(self):
+        self.mongo.insert_file()
 
 if __name__ == '__main__':
-    LoadTest().start()
+    Handle().start()
     pass
