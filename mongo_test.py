@@ -10,9 +10,8 @@ from pymongo import MongoClient
 from gridfs import GridFS
 import random
 import os
-import threading
-import time
-import sched
+
+from sxc_test_tools import LoadTest
 
 
 class Mongo(object):
@@ -39,52 +38,6 @@ class Mongo(object):
     def del_file_by_id(self, object_id):
         self.fs.delete(object_id)
 
-    def run(self):
-        self.insert_file()
-
-
-class LoadTest(object):
-    def __init__(self):
-        self.event = threading.Condition()
-
-    def run(self):
-        print(time.time())
-        pass
-
-    def start(self, current_num=concurrent_num, exec_times=exec_times, delay=delay, style=style):
-        th = []
-        for i in range(current_num):
-            th.append(threading.Thread(target=self._run, args=(exec_times, style)))
-        for j in th:
-            j.start()
-        if style == 'concurrent':
-            for i in range(exec_times):
-                self.event.acquire()
-                self.event.notify_all()
-                self.event.release()
-                if i + 1 != exec_times:
-                    while len(self.event._waiters) != current_num:
-                        time.sleep(0.1)
-                    time.sleep(delay)
-
-    def _run(self, exec_times, style):
-        if style == 'sequence':
-            for _ in range(exec_times):
-                self.run()
-                time.sleep(delay)
-        elif style == 'concurrent':
-            for _ in range(exec_times):
-                self.event.acquire()
-                self.event.wait()
-                self.event.release()
-                self.run()
-        elif style == 'scheduler':
-            s = sched.scheduler()
-            for i in range(exec_times):
-                s.enter(i * delay, 1, self.run)
-            s.run()
-        else:
-            raise Exception('style not support: ' + style)
 
 class Handle(LoadTest):
     def __init__(self):
@@ -92,7 +45,9 @@ class Handle(LoadTest):
         self.mongo = Mongo()
 
     def run(self):
-        self.mongo.insert_file()
+        file_id = self.mongo.insert_file()
+        self.mongo.get_file_by_id(file_id)
+
 
 if __name__ == '__main__':
     Handle().start()
